@@ -81,7 +81,6 @@ def main():
         #s1.switch_gcloud_auth_to_user_account()
         input_vcf = s1.input(vcf_path)
 
-        output_vcf_filename = input_vcf.filename.replace(".vcf", ".filtered.vcf")
         s1.command("cd /io/")
         s1.command("set -ex")
         s1.command(f"wget --quiet https://slivar.s3.amazonaws.com/gnomad.hg38.genomes.v3.fix.zip")
@@ -90,6 +89,8 @@ def main():
         s1.command(f"{cat_command} {input_vcf} | grep -v :NA: > without_NA.vcf")
 
         s1.command(f"java -jar /gatk.jar FixVcfHeader -I without_NA.vcf -O fixed_header.vcf")
+
+        output_vcf_filename = input_vcf.filename.replace(".vcf", f".filtered_gnomad_popmax_{args.gnomad_af}.vcf")
 
         s1.command(f"/slivar expr "
             f"--js /slivar-functions.js "
