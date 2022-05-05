@@ -1,9 +1,7 @@
-import json
 import hail as hl
 import os
 import re
 
-import pandas as pd
 from step_pipeline import pipeline, Backend, Localize, Delocalize
 
 DOCKER_IMAGE = "weisburd/slivar@sha256:b97f4b57dd58d0f3ef9824fc209a17665073d97a5af37129ba09b6e3605edd51"
@@ -21,11 +19,12 @@ def parse_args(pipeline):
     """
 
     parser = pipeline.get_config_arg_parser()
-    parser.add_argument("-g", "--gnomad-af", type=float, default=0.01, help="Filter VCF to variants with gnomAD POPMAX "
+    grp = parser.add_group("Prefilter VCF")
+    grp.add_argument("-g", "--gnomad-af", type=float, default=0.01, help="Filter VCF to variants with gnomAD POPMAX "
                         "AF below this threshold.")
-    parser.add_argument("-o", "--output-dir", help="Google Storage directory where to write the filtered VCF. "
+    grp.add_argument("-o", "--output-dir", help="Google Storage directory where to write the filtered VCF. "
                         "If not specified, the result vcf will be copied to the same directory as the input vcf")
-    parser.add_argument("vcf_path", nargs="+", help="Google Storage path of VCF file(s) to filter")
+    grp.add_argument("vcf_path", nargs="+", help="Google Storage path of VCF file(s) to filter")
 
     args = parser.parse_args()
 
