@@ -48,16 +48,16 @@ def define_args(pipeline):
     grp.add_argument("-g", "--use-global",
                      help="Run LIRICAL with the --global flag",
                      action="store_true")
-
     grp.add_argument("--vcf",
                      help="Google Storage path that contains single-sample VCFs referenced by the phenopackets. More "
                           "than one path can be provided by specifying this argument more than once. Also each path "
                           "can optionally contain wildcards (*).",
                      required=True,
                      action="append")
+
     grp.add_argument("phenopacket_paths",
                      nargs="+",
-                     help="Google Storage path of Phenopacket JSON files to process. More than one path can be "
+                     help="Google Storage path of phenopacket JSON files to process. More than one path can be "
                           "specified. Also each path can optionally contain wildcards (*).")
 
     grp.add_argument("-s", "--sample-id", help="Optionally, process only this sample id. Useful for testing.")
@@ -144,6 +144,7 @@ def parse_args(pipeline):
             "phenopacket_path": phenopacket_path,
             "vcf_path": vcf_path,
         })
+
         if requested_sample_id_found:
             break
 
