@@ -6,8 +6,8 @@ import re
 import pandas as pd
 from step_pipeline import pipeline, Backend, Localize, Delocalize
 
-DOCKER_IMAGE = "weisburd/lirical@sha256:196fa46d97dc160148daea7810cd2111eea001464d1e71f7d34d940b2f5bd57f"
-
+DOCKER_IMAGE = "weisburd/lirical@sha256:8f056f67153e4d873c27508fb9effda9c8fa0a1f2dc87777a58266fed4f8c82b"
+# DOCKER_IMAGE = "weisburd/lirical@sha256:196fa46d97dc160148daea7810cd2111eea001464d1e71f7d34d940b2f5bd57f"
 
 def define_args(pipeline):
     """Define command-line args for the LIRICAL pipeline.
@@ -180,8 +180,8 @@ def main():
         else:
             s1.command(f"ln -s {vcf_input} /{vcf_input.filename}")
 
-        #lirical_command = f"java -jar /LIRICAL.jar P -p {phenopacket_input} -e {exomiser_data_dir_input} --tsv"
-        lirical_command = f"java -jar /LIRICAL-1.3.4-with-annovar-0.38.jar P -p {phenopacket_input} -e {exomiser_data_dir_input} --tsv"
+        lirical_command = f"java -jar /LIRICAL.jar P -p {phenopacket_input} -e {exomiser_data_dir_input} --tsv"
+        #lirical_command = f"java -jar /LIRICAL-1.3.4-with-annovar-0.38.jar P -p {phenopacket_input} -e {exomiser_data_dir_input} --tsv"
 
         if args.use_global:
             lirical_command += " --global"
