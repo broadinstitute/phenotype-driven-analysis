@@ -86,7 +86,7 @@ def export_vcf(mt_path, sample_id, output_vcf_path, num_cpu=8, add_info_field=Fa
     mt = hl.read_matrix_table(mt_path)
     mt.describe()
     mt = mt.filter_cols(mt.s == sample_id)
-    mt = mt.filter_rows(hl.agg.any(mt.GT.is_non_ref()))
+    mt = mt.filter_rows(hl.agg.any(mt.GT.is_non_ref() & (mt.DP > 0)))
 
     if add_info_field:
         mt = mt.annotate_rows(info=hl.struct(

@@ -11,11 +11,12 @@ RUN install_packages \
     libbz2-dev \
     liblzma-dev \
     libssl-dev \
-	default-jdk \
+    default-jdk \
     python3-dev \
     python3-pip
 
-RUN wget https://github.com/TheJacksonLaboratory/LIRICAL/releases/download/v1.3.4/LIRICAL.jar
+COPY LIRICAL-1.3.4-with-annovar-0.38.jar /
+#RUN wget https://github.com/TheJacksonLaboratory/LIRICAL/releases/download/v1.3.4/LIRICAL.jar
 
 RUN python3 -m pip install --upgrade pip pandas
 
