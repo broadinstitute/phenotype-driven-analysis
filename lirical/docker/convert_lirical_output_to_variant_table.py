@@ -3,10 +3,9 @@ from pprint import pprint
 #import pandas as pd
 import re
 
+
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--gene-id-lookup", help="Path of TSV file downloaded from the HGNC website that maps NCBI gene ids "
-        "to Ensembl (ENSG) ids, to gene names. The table must have columns: ...")
     p.add_argument("--output-path", help="Output file path. Defaults to the input file path with a "
         ".variants_table.tsv.gz suffix")
 
@@ -70,6 +69,7 @@ def main():
         break
     pprint(output_rows)
     #pd.DataFrame(output_rows).to_tsv("")
+
 
 if __name__ == "__main__":
     main()
