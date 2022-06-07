@@ -57,16 +57,16 @@ def main():
 
         for i, sample_id in enumerate(sample_ids):
             sample_id = sample_id.replace(" ", "_")
-            output_vcf_path = f"{args.output_dir}/{mt_path_filename_prefix}/{sample_id}.vcf.bgz"
+            output_vcf_path = os.path.join(args.output_dir, f"{sample_id}.vcf")
 
-            if hl.hadoop_is_file(output_vcf_path):
-                print(f"   {output_vcf_path} already exists. Skipping {sample_id}...")
+            if hl.hadoop_is_file(f"{output_vcf_path}.gz") or hl.hadoop_is_file(f"{output_vcf_path}.bgz"):
+                print(f"   {output_vcf_path}*gz already exists. Skipping {sample_id}...")
                 continue
 
-            print(f"   {i}: Processing {sample_id}")
+            print(f"   {i}: Processing {sample_id}: {output_vcf_path}.gz")
             j = b.new_python_job(name=f"{sample_id} vcf")
             j.cpu(args.cpu)
-            j.call(export_vcf, mt_path, sample_id, output_vcf_path, args.cpu, args.add_info_field)
+            j.call(export_vcf, mt_path, sample_id, f"{output_vcf_path}.bgz", args.cpu, args.add_info_field)
 
         b.run()
 
