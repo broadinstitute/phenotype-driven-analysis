@@ -19,7 +19,7 @@ def parse_args(pipeline):
     """
 
     parser = pipeline.get_config_arg_parser()
-    grp = parser.add_group("Prefilter VCF")
+    grp = parser.add_argument_group("Prefilter VCF")
     grp.add_argument("-g", "--gnomad-af", type=float, default=0.01, help="Filter VCF to variants with gnomAD POPMAX "
                         "AF below this threshold.")
     grp.add_argument("-o", "--output-dir", help="Google Storage directory where to write the filtered VCF. "
@@ -28,34 +28,7 @@ def parse_args(pipeline):
 
     args = parser.parse_args()
 
-    # initialize hail with workaround for Hadoop bug involving requester-pays buckets:
-    # https://discuss.hail.is/t/im-encountering-bucket-is-a-requester-pays-bucket-but-no-user-project-provided/2536/2
-    def get_bucket(path):
-        if not path.startswith("gs://"):
-            parser.error(f"{path} must start with gs://")
-        return re.sub("^gs://", "", path).split("/")[0]
-
-    all_buckets = {get_bucket(path) for path in args.vcf_path}
-
-    hl.init(log="/dev/null", quiet=True, idempotent=True, spark_conf={
-        "spark.hadoop.fs.gs.requester.pays.mode": "CUSTOM",
-        "spark.hadoop.fs.gs.requester.pays.buckets": ",".join(all_buckets),
-        "spark.hadoop.fs.gs.requester.pays.project.id": args.gcloud_project,
-    })
-
-    # validate input paths
-    def check_paths(paths):
-        checked_paths = []
-        for path in paths:
-            if not path.startswith("gs://"):
-                parser.error(f"Path must start with gs:// {path}")
-            current_paths = [r["path"] for r in hl.hadoop_ls(path)]
-            if not current_paths:
-                parser.error(f"{path} not found")
-            checked_paths += current_paths
-        return checked_paths
-
-    check_paths(args.vcf_path)
+    hl.init(log="/dev/null", quiet=True, idempotent=True)
 
     return args
 
@@ -73,7 +46,7 @@ def main():
 
     for vcf_path in args.vcf_path:
         s1 = sp.new_step(f"prefilter vcf: {os.path.basename(vcf_path)}",
-                         cpu=1, memory="standard", image=DOCKER_IMAGE,
+                         cpu=1, memory="standard", storage="10G", image=DOCKER_IMAGE,
                          localize_by=Localize.COPY, delocalize_by=Delocalize.COPY,
                          output_dir=args.output_dir or os.path.dirname(vcf_path))
 
@@ -89,7 +62,7 @@ def main():
 
         s1.command(f"java -jar /gatk.jar FixVcfHeader -I without_NA.vcf -O fixed_header.vcf")
 
-        output_vcf_filename = input_vcf.filename.replace(".vcf", f".filtered_gnomad_popmax_{args.gnomad_af}.vcf")
+        output_vcf_filename = input_vcf.filename.replace(".bgz", "").replace(".gz", "")
 
         s1.command(f"/slivar expr "
             f"--js /slivar-functions.js "
@@ -99,10 +72,11 @@ def main():
             f"-o {output_vcf_filename} "
         )
 
-        s1.command(f"tabix {output_vcf_filename}")
+        s1.command(f"bgzip {output_vcf_filename}")
+        s1.command(f"tabix {output_vcf_filename}.gz")
 
-        s1.output(output_vcf_filename)
-        s1.output(f"{output_vcf_filename}.tbi")
+        s1.output(f"{output_vcf_filename}.gz")
+        s1.output(f"{output_vcf_filename}.gz.tbi")
 
     # run the pipeline
     sp.run()
