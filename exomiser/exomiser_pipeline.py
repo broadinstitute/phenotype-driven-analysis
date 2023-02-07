@@ -172,13 +172,14 @@ def main():
     bp = pipeline("Exomiser", backend=Backend.HAIL_BATCH_SERVICE, config_file_path="~/.step_pipeline")
     args, metadata_df = parse_args(bp)
 
+    bp.precache_file_paths(os.path.join(args.output_dir, "results/*_exomiser.*"))
+
     for _, row in metadata_df.iterrows():
         s1 = bp.new_step(f"Exomiser: {row.sample_id}", arg_suffix="exomiser",
-                         image=DOCKER_IMAGE, cpu=1, storage="85Gi", memory="highmem",
+                         image=DOCKER_IMAGE, cpu=2, storage="85Gi", memory="highmem",
                          localize_by=Localize.COPY, delocalize_by=Delocalize.COPY,
                          output_dir=args.output_dir,
         )
-
         s1.switch_gcloud_auth_to_user_account()
         #phenopacket_input = s1.input(row.phenopacket_path)
 

@@ -46,7 +46,6 @@ def main():
     )
 
     for mt_path, mt in path_to_mt.items():
-        mt_path_filename_prefix = re.sub(".mt$", "", os.path.basename(mt_path))
         sample_ids = mt.s.collect()
         print(f"Found {len(sample_ids)} total samples in {mt_path}")
         if args.sample_id:

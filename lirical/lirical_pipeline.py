@@ -159,7 +159,8 @@ def main():
     args, metadata_df = parse_args(bp)
 
     for _, row in metadata_df.iterrows():
-        s1 = bp.new_step(f"LIRICAL: {row.sample_id}", image=DOCKER_IMAGE, cpu=2, storage="70Gi", memory="highmem",
+        s1 = bp.new_step(f"LIRICAL: {row.sample_id}", arg_suffix="lirical",
+                         image=DOCKER_IMAGE, cpu=2, storage="70Gi", memory="highmem",
                          localize_by=Localize.GSUTIL_COPY, delocalize_by=Delocalize.COPY)
 
         s1.switch_gcloud_auth_to_user_account()
