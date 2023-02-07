@@ -52,6 +52,7 @@ def main():
                 "score2": float(row.compositeLR.replace(",", "")),
                 "scoreName3": None,
                 "score3": None,
+                "project": "Rare Genomes Project_Genomes_HMB" if sample_id not in "RGP_2035_3, RGP_2040_3, RGP_2058_1, RGP_2058_3, RGP_2061_3, RGP_2066_3, RGP_2069_3, RGP_2075_3, RGP_2095_3, RGP_2098_3, RGP_2107_3, RGP_2109_3, RGP_2113_3, RGP_2120_3, RGP_2122_3, RGP_2133_3".split(", ") else "Rare Genomes Project_Genomes_GRU", # TODO resolve this some other way
             })
 
     if not args.output_path:

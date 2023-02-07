@@ -86,6 +86,7 @@ def main():
                     "score2": phenotype_score,
                     "scoreName3": "variant_score",
                     "score3": variant_score,
+                    "project": "Rare Genomes Project_Genomes_HMB" if sample_id not in "RGP_2035_3, RGP_2040_3, RGP_2058_1, RGP_2058_3, RGP_2061_3, RGP_2066_3, RGP_2069_3, RGP_2075_3, RGP_2095_3, RGP_2098_3, RGP_2107_3, RGP_2109_3, RGP_2113_3, RGP_2120_3, RGP_2122_3, RGP_2133_3".split(", ") else "Rare Genomes Project_Genomes_GRU", # TODO resolve this some other way
                 })
 
         output_path = re.sub(".json$", f".{args.output_suffix}.tsv", exomiser_json_path)
@@ -95,7 +96,7 @@ def main():
 
         combined_output_rows.extend(output_rows)
 
-    combined_output_path = f"combined_exomiser_results_for_{len(args.exomiser_json)}_samples.for_seqr.json"
+    combined_output_path = f"combined_exomiser_results_for_{len(args.exomiser_json)}_samples.for_seqr.tsv"
     combined_output_df = pd.DataFrame(combined_output_rows)
     combined_output_df.to_csv(combined_output_path, sep="\t", index=False, header=True)
     print(f"Wrote {len(combined_output_df)} rows to {combined_output_path}")
