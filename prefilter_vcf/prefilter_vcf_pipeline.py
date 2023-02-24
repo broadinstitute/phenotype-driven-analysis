@@ -44,8 +44,9 @@ def main():
     for vcf_path in args.vcf_path:
         print(f"Parsing {vcf_path}")
 
+    sp.precache_file_paths(os.path.join(args.output_dir, "*.*"))
     for vcf_path in args.vcf_path:
-        s1 = sp.new_step(f"prefilter vcf: {os.path.basename(vcf_path)}",
+        s1 = sp.new_step(f"prefilter vcf: {os.path.basename(vcf_path)}", arg_suffix="prefilter",
                          cpu=1, memory="standard", storage="10G", image=DOCKER_IMAGE,
                          localize_by=Localize.COPY, delocalize_by=Delocalize.COPY,
                          output_dir=args.output_dir or os.path.dirname(vcf_path))

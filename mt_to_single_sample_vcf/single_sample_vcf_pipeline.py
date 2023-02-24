@@ -38,7 +38,7 @@ def main():
         path_to_mt[mt_path] = mt
 
     b = hb.Batch(
-        default_python_image="hailgenetics/hail:0.2.86",   # from https://hub.docker.com/r/hailgenetics/hail/tags
+        default_python_image="hailgenetics/hail:0.2.109",   # from https://hub.docker.com/r/hailgenetics/hail/tags
         backend=hb.ServiceBackend(
             billing_project=args.batch_billing_project,
             remote_tmpdir=args.batch_remote_tmpdir,
@@ -54,11 +54,12 @@ def main():
             if len(sample_ids) < len(set(args.sample_id)) and len(args.matrix_table_paths) == 1:
                 parser.error(", ".join(set(args.sample_id) - set(sample_ids)) + f" sample id(s) not found in {mt_path}")
 
+        existing_files = {p["path"] for p in hl.hadoop_ls(args.output_dir)}
         for i, sample_id in enumerate(sample_ids):
             sample_id = sample_id.replace(" ", "_")
             output_vcf_path = os.path.join(args.output_dir, f"{sample_id}.vcf")
 
-            if hl.hadoop_is_file(f"{output_vcf_path}.gz") or hl.hadoop_is_file(f"{output_vcf_path}.bgz"):
+            if f"{output_vcf_path}.gz" in existing_files or f"{output_vcf_path}.bgz" in existing_files:
                 print(f"   {output_vcf_path}*gz already exists. Skipping {sample_id}...")
                 continue
 
