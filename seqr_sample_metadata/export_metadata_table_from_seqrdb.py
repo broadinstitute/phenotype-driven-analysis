@@ -42,8 +42,8 @@ django.setup()
 from seqr.models import Project, Family, Individual, Sample, IgvSample, SavedVariant, VariantTag, VariantNote
 
 from reference_data.models import Omim, HumanPhenotypeOntology
-from metadata.gcloud_api_utils import get_genome_version_from_bam_or_cram_header, hadoop_exists_using_cache
-from metadata.seqr_utils import impute_sample_type
+from seqr_sample_metadata.gcloud_api_utils import get_genome_version_from_bam_or_cram_header, hadoop_exists_using_cache
+from seqr_sample_metadata.seqr_utils import impute_sample_type
 
 AFFECTED_STATUS_LOOKUP = {
   'A': 'Affected',
