@@ -55,7 +55,7 @@ PHENOPACKET_TEMPLATE_WITH_VCF = PHENOPACKET_TEMPLATE.strip() + """,
 
 def parse_args():
     p = argparse.ArgumentParser(description="This script generates phenopackets")
-    p.add_argument("-s", "--sample-id", help="Process a specific sample id")
+    p.add_argument("-s", "--sample-id", nargs="+", help="Process specific sample id(s)")
     p.add_argument("--vcf-dir",
                    default="gs://bw-proj/seqr-bw/single_sample_vcfs/RDG_WGS_Broad_Internal/filtered_gnomad_popmax_0.01/single_sample_vcfs/",
                    help="Directory that contains VCFs for each sample. The VCF filename is expected to be [sample_id].vcf.*")
@@ -122,7 +122,8 @@ def main():
     df = pd.read_table(args.sample_table)
     df = df.rename(columns={"individual_id": "sample_id"})
     if args.sample_id:
-        df = df[df.sample_id == args.sample_id]
+        df = df.loc[df["sample_id"].isin(args.sample_id)]
+        # df = df[df.sample_id.isin(args.sample_id)]
 
     vcf_paths = hl.hadoop_ls(os.path.join(args.vcf_dir, "*.vcf.*gz"))
 

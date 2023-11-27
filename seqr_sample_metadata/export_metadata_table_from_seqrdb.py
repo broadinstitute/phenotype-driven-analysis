@@ -33,7 +33,7 @@ import hail as hl
 
 hl.init(log="/dev/null", idempotent=True)
 
-sys.path.append(os.path.expanduser("~/code/seqr"))
+sys.path.append(os.path.expanduser("~/Documents/Projects/CodeBase/seqr"))
 
 import django
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
@@ -62,7 +62,7 @@ print("Starting step1__export_cram_paths_from_seqr.py")
 
 import datetime
 date_string = datetime.datetime.now().strftime("%Y_%m_%d")
-output_path = os.path.expanduser(f"~/code/sample_metadata/output_tables/seqr_cram_paths__{date_string}.txt_unfinished")
+output_path = os.path.expanduser(f"seqr_cram_paths__{date_string}.txt_unfinished")
 print("Writing to", output_path)
 with open(output_path, "wt") as f:
     f.write("\t".join([
@@ -96,9 +96,9 @@ with open(output_path, "wt") as f:
         'discovery_gene_symbols',
 
         'bucket',
-        'cram_path',
-        'crai_path',
-        "cram_and_crai_exist",
+        # 'cram_path',
+        # 'crai_path',
+        # "cram_and_crai_exist",
         'sample_type',
     ]) + "\n")
 
@@ -142,49 +142,49 @@ with open(output_path, "wt") as f:
             continue
 
         # figure out crai path
-        cram_and_crai_exist = False
+        # cram_and_crai_exist = False
         genome_version = project.genome_version
-        if cram_path and (cram_path.endswith(".cram") or cram_path.endswith(".bam")):
-            try:
-                path_exists = hadoop_exists_using_cache(cram_path, double_check_if_cache_says_yes=True)
-            except Exception as e:
-                print(f"ERROR #{error_crams_counter}: while checking if file exists: {cram_path}: {e}. Skipping this cram...")
-                error_crams_counter += 1
-                path_exists = False # while requester-pays buckets aren't working
+        # if cram_path and (cram_path.endswith(".cram") or cram_path.endswith(".bam")):
+        #     try:
+        #         path_exists = hadoop_exists_using_cache(cram_path, double_check_if_cache_says_yes=True)
+        #     except Exception as e:
+        #         print(f"ERROR #{error_crams_counter}: while checking if file exists: {cram_path}: {e}. Skipping this cram...")
+        #         error_crams_counter += 1
+        #         path_exists = False # while requester-pays buckets aren't working
 
-            if not path_exists:
-                missing_crams_counter += 1
-                print(f"{missing_crams_counter}: {sample_type} cram path not found: {cram_path}")
-            else:
-                if cram_path.endswith(".cram") and hadoop_exists_using_cache(re.sub(".cram$", ".cram.crai", cram_path), double_check_if_cache_says_yes=True):
-                    crai_path = re.sub(".cram$", ".cram.crai", cram_path)
-                elif cram_path.endswith(".cram") and hadoop_exists_using_cache(re.sub(".cram$", ".crai", cram_path), double_check_if_cache_says_yes=True):
-                    crai_path = re.sub(".cram$", ".crai", cram_path)
-                elif cram_path.endswith(".bam") and hadoop_exists_using_cache(re.sub(".bam$", ".bam.bai", cram_path), double_check_if_cache_says_yes=True):
-                    crai_path = re.sub(".bam$", ".bam.bai", cram_path)
-                elif cram_path.endswith(".bam") and hadoop_exists_using_cache(re.sub(".bam$", ".bai", cram_path), double_check_if_cache_says_yes=True):
-                    crai_path = re.sub(".bam$", ".bai", cram_path)
-
-                if crai_path:
-                    cram_and_crai_exist = True
-                else:
-                    print(f"{missing_crams_counter}: {sample_type} crai path not found for cram: {cram_path}")
+            # if not path_exists:
+            #     missing_crams_counter += 1
+            #     print(f"{missing_crams_counter}: {sample_type} cram path not found: {cram_path}")
+            # else:
+            #     if cram_path.endswith(".cram") and hadoop_exists_using_cache(re.sub(".cram$", ".cram.crai", cram_path), double_check_if_cache_says_yes=True):
+            #         crai_path = re.sub(".cram$", ".cram.crai", cram_path)
+            #     elif cram_path.endswith(".cram") and hadoop_exists_using_cache(re.sub(".cram$", ".crai", cram_path), double_check_if_cache_says_yes=True):
+            #         crai_path = re.sub(".cram$", ".crai", cram_path)
+            #     elif cram_path.endswith(".bam") and hadoop_exists_using_cache(re.sub(".bam$", ".bam.bai", cram_path), double_check_if_cache_says_yes=True):
+            #         crai_path = re.sub(".bam$", ".bam.bai", cram_path)
+            #     elif cram_path.endswith(".bam") and hadoop_exists_using_cache(re.sub(".bam$", ".bai", cram_path), double_check_if_cache_says_yes=True):
+            #         crai_path = re.sub(".bam$", ".bai", cram_path)
+            #
+            #     if crai_path:
+            #         cram_and_crai_exist = True
+            #     else:
+            #         print(f"{missing_crams_counter}: {sample_type} crai path not found for cram: {cram_path}")
 
         # check for errors in seqr database where a WGS project contains a WES cram or vice versa.
-        #if cram_and_crai_exist and (sample_type == "WGS" and any(k in cram_path.lower() for k in ("_wes_", "exome"))) \
+        # if cram_and_crai_exist and (sample_type == "WGS" and any(k in cram_path.lower() for k in ("_wes_", "exome"))) \
         #    or (sample_type == "WES" and any(k in cram_path.lower() for k in ("_wgs_", "genome"))):
         #        print(f"ERROR: {sample_type} project contains cram with different sample type: {project.name}  {cram_path}. Skipping...")
         #        cram_path = crai_path = ""
         #        cram_and_crai_exist = False
 
         # validate genome_version
-        if cram_and_crai_exist:
-            true_genome_version = get_genome_version_from_bam_or_cram_header(cram_path)
-            if str(true_genome_version) != str(project.genome_version):
-                print(f"WARNING: {project.name} {project.guid} cram {cram_path} has genome_version = {true_genome_version} rather than {project.genome_version}")
-                genome_version = true_genome_version
-        else:
-            missing_crams_counter += 1
+        # if cram_and_crai_exist:
+        #     true_genome_version = get_genome_version_from_bam_or_cram_header(cram_path)
+        #     if str(true_genome_version) != str(project.genome_version):
+        #         print(f"WARNING: {project.name} {project.guid} cram {cram_path} has genome_version = {true_genome_version} rather than {project.genome_version}")
+        #         genome_version = true_genome_version
+        # else:
+        #     missing_crams_counter += 1
 
         discovery_gene_ENSG_ids = []
         discovery_gene_symbols = []
@@ -238,9 +238,9 @@ with open(output_path, "wt") as f:
             ",".join(sorted(set(discovery_gene_symbols))),
 
             gs_bucket,
-            cram_path,
-            crai_path,
-            cram_and_crai_exist,
+            # cram_path,
+            # crai_path,
+            # cram_and_crai_exist,
             sample_type,
         ])) + "\n")
 

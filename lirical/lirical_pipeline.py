@@ -7,6 +7,8 @@ import pandas as pd
 from step_pipeline import pipeline, Backend, Localize, Delocalize
 
 DOCKER_IMAGE = "weisburd/lirical@sha256:8f056f67153e4d873c27508fb9effda9c8fa0a1f2dc87777a58266fed4f8c82b"
+
+
 # DOCKER_IMAGE = "weisburd/lirical@sha256:196fa46d97dc160148daea7810cd2111eea001464d1e71f7d34d940b2f5bd57f"
 
 def define_args(pipeline):
@@ -60,7 +62,8 @@ def define_args(pipeline):
                      help="Google Storage path of phenopacket JSON files to process. More than one path can be "
                           "specified. Also each path can optionally contain wildcards (*).")
 
-    grp.add_argument("-s", "--sample-id", help="Optionally, process only this sample id. Useful for testing.")
+    grp.add_argument("-s", "--sample-id", nargs="+", help="List of sample IDs to " \
+                                                          "process.")
 
 
 def parse_args(pipeline):
@@ -87,7 +90,8 @@ def parse_args(pipeline):
         return re.sub("^gs://", "", path).split("/")[0]
 
     all_buckets = {
-        get_bucket(path) for path in [args.lirical_data_dir, args.exomiser_data_dir] + args.phenopacket_paths + args.vcf
+        get_bucket(path) for path in [args.lirical_data_dir,
+                                      args.exomiser_data_dir] + args.phenopacket_paths + args.vcf
     }
 
     hl.init(log="/dev/null", quiet=True, idempotent=True, spark_conf={
@@ -114,40 +118,54 @@ def parse_args(pipeline):
     # create DataFrame of phenopackets to process, with columns: "sample_id", "phenopacket_path", "vcf_path"
     rows = []
     requested_sample_id_found = False
-    print(f"Processing {len(phenopacket_paths)} phenopacket(s)")
+
+    if args.sample_id:
+        print(f"Processing {len(args.sample_id)} phenopacket(s)")
+    else:
+        print(f"Processing {len(phenopacket_paths)} phenopacket(s)")
+
     for phenopacket_path in phenopacket_paths:
-        print(f"Parsing {phenopacket_path}")
         with hl.hadoop_open(phenopacket_path, "r") as f:
             phenopacket_json = json.load(f)
             sample_id = phenopacket_json.get("subject", {}).get("id")
-            if args.sample_id:
-                if args.sample_id != sample_id:
-                    continue
-                else:
-                    requested_sample_id_found = True
+            # if args.sample_id:
+            #     if sample_id not in set(args.sample_id):
+            #         continue
+            #     else:
+            #         requested_sample_id_found = True
 
             if sample_id is None:
                 parser.error(f"{phenopacket_path} is missing a 'subject' section")
 
-            if ("htsFiles" not in phenopacket_json or not isinstance(phenopacket_json["htsFiles"], list) or
+            if ("htsFiles" not in phenopacket_json or not isinstance(
+                    phenopacket_json["htsFiles"], list) or
                     "uri" not in phenopacket_json["htsFiles"][0]):
-                parser.error(f"{phenopacket_path} is missing an 'htsFiles' section with a VCF uri")
-            vcf_filename = phenopacket_json["htsFiles"][0]["uri"].replace("file:///", "")
+                parser.error(
+                    f"{phenopacket_path} is missing an 'htsFiles' section with a VCF uri")
+            vcf_filename = phenopacket_json["htsFiles"][0]["uri"].replace("file:///",
+                                                                          "")
 
-            matching_vcf_paths = [vcf_path for vcf_path in vcf_paths if vcf_filename in vcf_path]
+            matching_vcf_paths = [vcf_path for vcf_path in vcf_paths if
+                                  vcf_filename in vcf_path]
             if not matching_vcf_paths:
-                print(f"WARNING: Couldn't find {vcf_filename} referred to by {phenopacket_path}. Skipping...")
+                print(
+                    f"WARNING: Couldn't find {vcf_filename} referred to by {phenopacket_path}. Skipping...")
                 continue
             vcf_path = matching_vcf_paths[0]
 
-        rows.append({
-            "sample_id": sample_id,
-            "phenopacket_path": phenopacket_path,
-            "vcf_path": vcf_path,
-        })
+            if (args.sample_id and sample_id in set(args.sample_id)) or (not args.sample_id):
+                # print(phenopacket_path, sample_id)
+                # print(f"Parsing {phenopacket_path}")
+                rows.append({
+                    "sample_id": sample_id,
+                    "phenopacket_path": phenopacket_path,
+                    "vcf_path": vcf_path,
+                })
 
-        if requested_sample_id_found:
-            break
+            # print(rows)
+
+        # if requested_sample_id_found:
+        #     break
 
     metadata_df = pd.DataFrame(rows)
 
@@ -155,15 +173,20 @@ def parse_args(pipeline):
 
 
 def main():
-    bp = pipeline("LIRICAL", backend=Backend.HAIL_BATCH_SERVICE, config_file_path="~/.step_pipeline")
+    bp = pipeline("LIRICAL", backend=Backend.HAIL_BATCH_SERVICE,
+                  config_file_path="~/.step_pipeline")
     args, metadata_df = parse_args(bp)
 
     for _, row in metadata_df.iterrows():
         s1 = bp.new_step(f"LIRICAL: {row.sample_id}", arg_suffix="lirical",
                          image=DOCKER_IMAGE, cpu=2, storage="70Gi", memory="highmem",
-                         localize_by=Localize.GSUTIL_COPY, delocalize_by=Delocalize.COPY)
+                         localize_by=Localize.GSUTIL_COPY,
+                         delocalize_by=Delocalize.COPY)
 
-        s1.switch_gcloud_auth_to_user_account()
+        s1.switch_gcloud_auth_to_user_account(gcloud_project="seqr-project",
+                                              gcloud_user_account="majialan@broadinstitute.org",
+                                              gcloud_credentials_path="gs://jialan-cred")
+
         phenopacket_input = s1.input(row.phenopacket_path)
         vcf_input = s1.input(row.vcf_path)
         lirical_data_dir_input = s1.input(args.lirical_data_dir)
@@ -175,14 +198,15 @@ def main():
 
         # the vcf's path within the container needs to match the vcf path specified in the phenopacket
         if row.vcf_path.endswith("gz"):
-            unzipped_vcf_path = re.sub("(.bgz|.gz)$", "", os.path.basename(vcf_input.local_path))
+            unzipped_vcf_path = re.sub("(.bgz|.gz)$", "",
+                                       os.path.basename(vcf_input.local_path))
             # filter out ":NA:" fields to work around a bug where DP="NA" in some VCF rows.
             s1.command(f"gunzip -c {vcf_input} | grep -v :NA: > /{unzipped_vcf_path}")
         else:
             s1.command(f"ln -s {vcf_input} /{vcf_input.filename}")
 
         lirical_command = f"java -jar /LIRICAL.jar P -p {phenopacket_input} -e {exomiser_data_dir_input} --tsv"
-        #lirical_command = f"java -jar /LIRICAL-1.3.4-with-annovar-0.38.jar P -p {phenopacket_input} -e {exomiser_data_dir_input} --tsv"
+        # lirical_command = f"java -jar /LIRICAL-1.3.4-with-annovar-0.38.jar P -p {phenopacket_input} -e {exomiser_data_dir_input} --tsv"
 
         if args.use_global:
             lirical_command += " --global"
@@ -196,9 +220,11 @@ def main():
             lirical_command += f" --transcriptdb {args.transcriptdb}"
         s1.command(lirical_command)
 
-        #output_path_prefix = os.path.join(args.output_dir, f"{row.sample_id}.lirical")
-        phenopacket_input_prefix = re.sub("(.phenopacket)?.json$", "", phenopacket_input.filename)
-        output_path_prefix = os.path.join(args.output_dir, f"{phenopacket_input_prefix}.lirical")
+        # output_path_prefix = os.path.join(args.output_dir, f"{row.sample_id}.lirical")
+        phenopacket_input_prefix = re.sub("(.phenopacket)?.json$", "",
+                                          phenopacket_input.filename)
+        output_path_prefix = os.path.join(args.output_dir,
+                                          f"{phenopacket_input_prefix}.lirical")
 
         s1.output("lirical.html", output_path=f"{output_path_prefix}.html")
         s1.output("lirical.tsv", output_path=f"{output_path_prefix}.tsv")

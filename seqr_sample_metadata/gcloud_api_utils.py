@@ -122,7 +122,7 @@ def _connect_to_cram_and_bam_path_genome_version_cache_db():
     if _cram_and_bam_path_genome_version_cache_db is not None:
         return _cram_and_bam_path_genome_version_cache_db
 
-    cache_db_path = '~/code/sample_metadata/metadata/cram_and_bam_path_genome_version_cache.db'
+    cache_db_path = 'cram_and_bam_path_genome_version_cache.db'
     _cram_and_bam_path_genome_version_cache_db = sqlite3.connect(
         os.path.expanduser(cache_db_path),
         isolation_level=None,
@@ -178,7 +178,7 @@ def _connect_to_cram_and_bam_path_fragment_length_stats_cache_db():
     if _cram_and_bam_path_fragment_length_stats_cache_db is not None:
         return _cram_and_bam_path_fragment_length_stats_cache_db
 
-    cache_db_path = '~/code/sample_metadata/metadata/cram_and_bam_path_fragment_length_stats_cache.db'
+    cache_db_path = 'cram_and_bam_path_fragment_length_stats_cache.db'
     _cram_and_bam_path_fragment_length_stats_cache_db = sqlite3.connect(
         os.path.expanduser(cache_db_path),
         isolation_level=None,
@@ -262,7 +262,7 @@ def _connect_to_hadoop_cache_db():
     if _hadoop_cache_db is not None:
         return _hadoop_cache_db
 
-    cache_db_path = '~/code/sample_metadata/metadata/hadoop_cache.db'
+    cache_db_path = 'hadoop_cache.db'
     _hadoop_cache_db = sqlite3.connect(
         os.path.expanduser(cache_db_path),
         isolation_level=None,
