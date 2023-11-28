@@ -91,7 +91,7 @@ with open(output_path, "wt") as f:
         'population',
         'coded_phenotype',
 
-        'post_discovery_omim_number',
+        # 'post_discovery_omim_number',
         'discovery_gene_ids',
         'discovery_gene_symbols',
 
@@ -233,7 +233,7 @@ with open(output_path, "wt") as f:
             individual.population or "",
             family.coded_phenotype or "",
 
-            family.post_discovery_omim_number or "",
+            # family.post_discovery_omim_number or "",
             ",".join(sorted(set(discovery_gene_ENSG_ids))),
             ",".join(sorted(set(discovery_gene_symbols))),
 
