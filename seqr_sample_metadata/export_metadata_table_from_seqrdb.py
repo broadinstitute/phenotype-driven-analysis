@@ -113,8 +113,9 @@ with open(output_path, "wt") as f:
         project_name_lowercase = project.name.lower().replace(' ', '_')
 
         # skip some projects
+        # or "_rna" in project_guid_lowercase \
         if "test_project" in project.name or "demo" in project_name_lowercase or "test-run" in project.name \
-                or "_rna" in project_guid_lowercase or project.guid in (
+                or project.guid in (
                 "R0326_engle_moebius", "R0270_marnero_acc_16_samples_r", "R0272_sample_1413_1_muscled",
                 "R0486_cmg_gcnv", "R0391_wintermoran_june_2017", "R0224_ibd_273_samples_march_20",
                 "R0283_sweetser_trio_1558955_li", "R0305_sigma_extremes", "R0417_wintermoran_november_201",
@@ -267,5 +268,6 @@ df.to_csv(
     sep="\t",
 )
 
+os.system(f"gsutil -m cp {output_path2} gs://jialan-storage/seqr_metadata.txt")
 os.remove(output_path)
 print("Done")
